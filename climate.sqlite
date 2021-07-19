@@ -1,0 +1,52 @@
+# inspecting data
+SELECT *
+FROM state_climate;
+
+# Running average temp by state
+SELECT state, year, tempf, 
+   AVG(tempf) OVER(PARTITION BY state 
+   ORDER BY year) AS "running_avg_temp"
+FROM state_climate;
+
+# Lowest temp from each state
+SELECT state, year, tempf,
+   FIRST_VALUE(tempf) OVER(PARTITION BY state 
+   ORDER BY tempf) AS "lowest_temp"
+FROM state_climate;
+
+# Highest temp from each state
+SELECT state, year, tempf,
+   LAST_VALUE(tempf) OVER(PARTITION BY state 
+   ORDER BY tempf RANGE BETWEEN UNBOUNDED 
+   PRECEDING AND UNBOUNDED FOLLOWING) 
+   AS "highest_temp"
+FROM state_climate;
+
+# Looking at largest changes in temp year to year
+SELECT state, year, tempf,
+   tempf - LAG(tempf, 1, tempf) OVER(
+   PARTITION BY state 
+   ORDER BY year) 
+   AS "change_in_temp"
+FROM state_climate
+ORDER BY 4 DESC;
+
+# Coldest average temps on record ranked
+SELECT RANK() OVER(ORDER BY tempf ASC) AS
+   "coldest_rank", state, year, tempf
+FROM state_climate;
+
+# Warmest average temps on record ranked
+SELECT RANK() OVER(ORDER BY tempf DESC) AS
+   "warmest_rank", state, year, tempf
+FROM state_climate;
+
+# Temps on record in quartiles (state by state)
+SELECT NTILE(4) OVER(PARTITION BY state ORDER BY tempf ASC) AS
+   "quartiles", state, year, tempf
+FROM state_climate;
+
+# Temps on record in quintiles
+SELECT NTILE(5) OVER(ORDER BY tempf ASC) AS
+   "quintiles", state, year, tempf
+FROM state_climate;
